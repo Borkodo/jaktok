@@ -3,3 +3,5 @@ video_inbox/
 *.log
 *.env
 __pycache__/
+*.iml
+.idea/
