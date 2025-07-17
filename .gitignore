@@ -1,0 +1,5 @@
+video_inbox/
+*.mp4
+*.log
+*.env
+__pycache__/
