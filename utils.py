@@ -25,3 +25,16 @@ async def run_subprocess(cmd: list[str]):
 
     if proc.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{stderr.decode()}")
+
+def extract_preview(video_path: str, preview_folder: str):
+    preview_path = os.path.join(preview_folder, Path(video_path).stem + ".jpg")
+    subprocess.run([
+        "ffmpeg",
+        "-i", video_path,
+        "-vf", "select=eq(n\,0)",
+        "-q:v", "2",  
+        "-frames:v", "1",
+        preview_path
+    ], check=True)
+    return preview_path
+
