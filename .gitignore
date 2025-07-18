@@ -5,3 +5,5 @@ video_inbox/
 __pycache__/
 *.iml
 .idea/
+.env
+index.json
