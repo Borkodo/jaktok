@@ -22,14 +22,12 @@ class VideoScreen(Screen):
         self.preview_path = get_preview_path(video_path)
         self.layout = FloatLayout(size_hint=(1,1), pos_hint={"x": 0, "y": 0})
 
-        # Add background color (black)
         with self.canvas.before:
             from kivy.graphics import Color, Rectangle
             Color(0, 0, 0, 1)
             self.bg = Rectangle(size=self.size, pos=self.pos)
             self.bind(size=self.update_bg, pos=self.update_bg)
 
-        # Add preview image if available
         if os.path.exists(self.preview_path):
             print(f"[DEBUG] ✅ Found preview: {self.preview_path}")
             self.preview = Image(
@@ -44,7 +42,6 @@ class VideoScreen(Screen):
             print(f"[WARN] ❌ Preview not found: {self.preview_path}")
             self.preview = None
 
-        # Add video (but keep it invisible for now)
         self.video = Video(
             source='',
             state='stop',
@@ -70,8 +67,8 @@ class VideoScreen(Screen):
             print("[DEBUG] 🎬 First frame detected. Removing preview.")
             self.video.opacity = 1
             self.remove_preview()
-            return False  # Stop polling
-        return True  # Keep polling
+            return False
+        return True
 
     def remove_preview(self):
         if self.preview:
@@ -94,6 +91,7 @@ class VideoScreen(Screen):
 
 class VideoScrollerApp(App):
     def build(self):
+        Window.show_cursor = False
         Window.fullscreen = 'auto'
         self.manager = ScreenManager(transition=SlideTransition(duration=0.3))
         self.videos = self.load_videos()
