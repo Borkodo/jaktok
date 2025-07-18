@@ -18,6 +18,8 @@ VIDEO_FOLDER = os.path.join(os.path.dirname(__file__), "video_inbox")
 INDEX_JSON = os.path.join(os.path.dirname(__file__), "index.json")
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
 
+from utils import get_clean_filename, run_subprocess, extract_preview  # make sure extract_preview is imported
+
 async def download_video_480p(url, folder):
     clean_filename, temp_filename = get_clean_filename(url)
     full_path = os.path.join(folder, clean_filename)
@@ -31,7 +33,7 @@ async def download_video_480p(url, folder):
         ])
         print("✅ Downloaded native 480p.")
         record_video(os.path.basename(full_path))
-        return True
+        return clean_filename
     except Exception:
         print("⚠️ 480p not available. Downloading best and re-encoding...")
 
@@ -59,7 +61,8 @@ async def download_video_480p(url, folder):
         os.remove(temp_path)
         print(f"✅ Re-encoded: {os.path.basename(full_path)}")
         record_video(os.path.basename(full_path))
-        return True
+        return clean_filename
+
 
 
 def record_video(filename: str):
@@ -83,6 +86,9 @@ def record_video(filename: str):
 
     with open(index_path, "w") as f:
         json.dump(videos, f, indent=2)
+
+    full_path = os.path.join(VIDEO_FOLDER, filename)
+    extract_preview(full_path)
 
 
 

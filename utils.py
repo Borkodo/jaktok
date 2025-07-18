@@ -1,3 +1,5 @@
+import subprocess
+
 import yt_dlp
 import asyncio
 
@@ -26,15 +28,14 @@ async def run_subprocess(cmd: list[str]):
     if proc.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{stderr.decode()}")
 
-def extract_preview(video_path: str, preview_folder: str):
-    preview_path = os.path.join(preview_folder, Path(video_path).stem + ".jpg")
+def extract_preview(video_path):
+    thumbnail_path = video_path.rsplit(".", 1)[0] + "_preview.jpg"
     subprocess.run([
         "ffmpeg",
+        "-y",
         "-i", video_path,
-        "-vf", "select=eq(n\,0)",
-        "-q:v", "2",  
-        "-frames:v", "1",
-        preview_path
+        "-ss", "00:00:00.500",
+        "-vframes", "1",
+        thumbnail_path
     ], check=True)
-    return preview_path
 
