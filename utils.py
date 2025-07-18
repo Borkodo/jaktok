@@ -32,10 +32,9 @@ def extract_preview(video_path):
     thumbnail_path = video_path.rsplit(".", 1)[0] + "_preview.jpg"
     subprocess.run([
         "ffmpeg",
-        "-y",
         "-i", video_path,
-        "-ss", "00:00:00.500",
-        "-vframes", "1",
+        "-vf", "select=eq(n\\,0)" ,
+        "-q:v", "3",
         thumbnail_path
     ], check=True)
 
