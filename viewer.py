@@ -18,20 +18,25 @@ from wifi_utils import scan_networks, connect_to_wifi, is_wifi_connected
 VIDEO_FOLDER = os.path.join(os.path.dirname(__file__), "video_inbox")
 INDEX_JSON = os.path.join(os.path.dirname(__file__), "index.json")
 
+
 class WifiScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
+        self.root_layout = FloatLayout()
 
-        # Scrollable network list
+        self.layout = BoxLayout(orientation='vertical', padding=20, spacing=10, size_hint=(0.9, 0.9), pos_hint={"center_x": 0.5, "center_y": 0.5})
+
         self.scroll = ScrollView(size_hint=(1, 0.6))
         self.network_list = BoxLayout(orientation='vertical', size_hint_y=None, spacing=5)
         self.network_list.bind(minimum_height=self.network_list.setter('height'))
         self.scroll.add_widget(self.network_list)
 
         self.status_label = Label(text="Select a network:", size_hint_y=None, height=30)
-        self.password_input = TextInput(hint_text="Enter Wi-Fi password", password=True, multiline=False, size_hint_y=None, height=40)
+        self.password_input = TextInput(
+            hint_text="Enter Wi-Fi password", password=True, multiline=False,
+            size_hint_y=None, height=40
+        )
         self.connect_button = Button(text="Connect", on_press=self.connect_to_selected, size_hint_y=None, height=40)
 
         self.layout.add_widget(self.scroll)
@@ -39,7 +44,8 @@ class WifiScreen(Screen):
         self.layout.add_widget(self.password_input)
         self.layout.add_widget(self.connect_button)
 
-        self.add_widget(self.layout)
+        self.root_layout.add_widget(self.layout)
+        self.add_widget(self.root_layout)
 
         self.selected_ssid = None
         Clock.schedule_once(lambda dt: self.populate_networks(), 0.5)
@@ -72,6 +78,7 @@ class WifiScreen(Screen):
         self.status_label.text = "✅ Connected" if success else "❌ Connection failed"
         if success:
             App.get_running_app().restart_video_app()
+
 
 def get_preview_path(video_path):
     return video_path.rsplit(".", 1)[0] + "_preview.jpg"
