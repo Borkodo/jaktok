@@ -257,17 +257,17 @@ class VideoScrollerApp(App):
         return os.path.join(VIDEO_FOLDER, self.videos[index]["filename"])
 
     def on_touch_down(self, window, touch):
-        self.touch_y = touch.y
+        self.touch_x = touch.x
 
     def on_touch_up(self, window, touch):
-        if self.touch_y is None:
+        if self.touch_x is None:
             return
-        delta = touch.y - self.touch_y
+        delta = touch.x - self.touch_x
         if delta > 50:
-            self.scroll(1)
-        elif delta < -50:
             self.scroll(-1)
-        self.touch_y = None
+        elif delta < -50:
+            self.scroll(1)
+        self.touch_x = None
 
     def scroll(self, direction):
         new_index = self.index + direction
