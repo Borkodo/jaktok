@@ -8,8 +8,55 @@ from kivy.clock import Clock
 import json
 import os
 
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.textinput import TextInput
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from wifi_utils import scan_networks, connect_to_wifi, is_wifi_connected
+
 VIDEO_FOLDER = os.path.join(os.path.dirname(__file__), "video_inbox")
 INDEX_JSON = os.path.join(os.path.dirname(__file__), "index.json")
+
+class WifiScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
+        self.status_label = Label(text="Select a network:")
+        self.layout.add_widget(self.status_label)
+
+        self.network_buttons = []
+        self.ssid_input = None
+        self.password_input = TextInput(hint_text="Enter Wi-Fi password", password=True, multiline=False)
+        self.connect_button = Button(text="Connect", on_press=self.connect_to_selected)
+
+        self.layout.add_widget(self.password_input)
+        self.layout.add_widget(self.connect_button)
+        self.add_widget(self.layout)
+        self.selected_ssid = None
+
+        Clock.schedule_once(lambda dt: self.populate_networks(), 0.5)
+
+    def populate_networks(self):
+        ssids = scan_networks()
+        for ssid in ssids:
+            btn = Button(text=ssid, size_hint_y=None, height=40)
+            btn.bind(on_press=lambda instance, s=ssid: self.select_ssid(s))
+            self.layout.add_widget(btn)
+            self.network_buttons.append(btn)
+
+    def select_ssid(self, ssid):
+        self.selected_ssid = ssid
+        self.status_label.text = f"Selected: {ssid}"
+
+    def connect_to_selected(self, instance):
+        if not self.selected_ssid:
+            self.status_label.text = "⚠️ Please select a network"
+            return
+        success = connect_to_wifi(self.selected_ssid, self.password_input.text)
+        self.status_label.text = "✅ Connected" if success else "❌ Connection failed"
+        if success:
+            App.get_running_app().restart_video_app()
+
 
 def get_preview_path(video_path):
     return video_path.rsplit(".", 1)[0] + "_preview.jpg"
@@ -94,6 +141,17 @@ class VideoScrollerApp(App):
         Window.show_cursor = False
         Window.fullscreen = 'auto'
         self.manager = ScreenManager(transition=SlideTransition(duration=0.3))
+
+        if not is_wifi_connected():
+            print("[INFO] 📶 No Wi-Fi detected. Showing Wi-Fi screen.")
+            self.manager.add_widget(WifiScreen(name='wifi'))
+            self.manager.current = 'wifi'
+        else:
+            self.setup_video_viewer()
+
+        return self.manager
+
+    def setup_video_viewer(self):
         self.videos = self.load_videos()
         self.index = 0
 
@@ -106,8 +164,11 @@ class VideoScrollerApp(App):
             print("❌ No videos found")
 
         Window.bind(on_touch_down=self.on_touch_down, on_touch_up=self.on_touch_up)
-        self.touch_y = None
-        return self.manager
+
+    def restart_video_app(self):
+        self.manager.clear_widgets()
+        self.setup_video_viewer()
+        self.manager.current = 'current'
 
     def load_videos(self):
         with open(INDEX_JSON) as f:
