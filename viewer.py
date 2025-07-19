@@ -134,7 +134,7 @@ class VideoScreen(Screen):
         self.preview_path = get_preview_path(video_path)
         rotated_size = (Window.height, Window.width)
         self.size = rotated_size
-        self.layout = FloatLayout(size_hint=(None, None), size=rotated_size, pos=(0, 0))
+        self.layout = FloatLayout(size_hint=(1, 1), size=rotated_size)
         with self.canvas.before:
             from kivy.graphics import Color, Rectangle
             Color(0, 0, 0, 1)
