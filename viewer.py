@@ -18,6 +18,18 @@ from wifi_utils import scan_networks, connect_to_wifi, is_wifi_connected
 VIDEO_FOLDER = os.path.join(os.path.dirname(__file__), "video_inbox")
 INDEX_JSON = os.path.join(os.path.dirname(__file__), "index.json")
 
+from kivy.uix.widget import Widget
+from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale
+
+class FlippedRoot(Widget):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        with self.canvas.before:
+            PushMatrix()
+            self.scale = Scale(x=-1, y=-1, z=1, origin=Window.center)
+        with self.canvas.after:
+            PopMatrix()
+
 
 class WifiScreen(Screen):
     def __init__(self, **kwargs):
@@ -171,7 +183,9 @@ class VideoScrollerApp(App):
         else:
             self.setup_video_viewer()
 
-        return self.manager
+        flipped_root = FlippedRoot()
+        flipped_root.add_widget(self.manager)
+        return flipped_root
 
     def setup_video_viewer(self):
         self.videos = self.load_videos()
