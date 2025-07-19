@@ -49,7 +49,7 @@ class WifiScreen(Screen):
         print(f"[DEBUG] Found networks: {ssids}")
         for ssid in ssids:
             btn = Button(text=ssid, size_hint_y=None, height=40)
-            btn.bind(on_press=self.make_ssid_selector(ssid))
+            btn.bind(on_release=self.make_ssid_selector(ssid))
             self.network_list.add_widget(btn)
 
     def make_ssid_selector(self, ssid):
