@@ -264,9 +264,9 @@ class VideoScrollerApp(App):
             return
         delta = touch.x - self.touch_x
         if delta > 50:
-            self.scroll(-1)
-        elif delta < -50:
             self.scroll(1)
+        elif delta < -50:
+            self.scroll(-1)
         self.touch_x = None
 
     def scroll(self, direction):
