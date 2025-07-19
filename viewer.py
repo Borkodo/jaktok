@@ -19,14 +19,15 @@ VIDEO_FOLDER = os.path.join(os.path.dirname(__file__), "video_inbox")
 INDEX_JSON = os.path.join(os.path.dirname(__file__), "index.json")
 
 from kivy.uix.widget import Widget
-from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale
+from kivy.graphics import PushMatrix, PopMatrix, Rotate, Translate
 
-class FlippedRoot(Widget):
+class RotatedRoot(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         with self.canvas.before:
             PushMatrix()
-            self.scale = Scale(x=-1, y=-1, z=1, origin=Window.center)
+            self.rot = Rotate(angle=90, origin=(0, 0))
+            self.trans = Translate(Window.height, 0)
         with self.canvas.after:
             PopMatrix()
 
@@ -183,9 +184,9 @@ class VideoScrollerApp(App):
         else:
             self.setup_video_viewer()
 
-        flipped_root = FlippedRoot()
-        flipped_root.add_widget(self.manager)
-        return flipped_root
+        rotated_root = RotatedRoot()
+        rotated_root.add_widget(self.manager)
+        return rotated_root
 
     def setup_video_viewer(self):
         self.videos = self.load_videos()
