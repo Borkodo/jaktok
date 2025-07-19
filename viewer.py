@@ -24,12 +24,18 @@ from kivy.graphics import PushMatrix, PopMatrix, Rotate, Translate
 class RotatedRoot(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.size = Window.size
+        Window.bind(on_resize=self.update_size)
+        
         with self.canvas.before:
             PushMatrix()
             self.rot = Rotate(angle=90, origin=(0, 0))
-            self.trans = Translate(Window.height, 0)
+            self.trans = Translate(0, -Window.width)
         with self.canvas.after:
             PopMatrix()
+
+    def update_size(self, *args):
+        self.size = Window.size
 
 
 class WifiScreen(Screen):
@@ -185,6 +191,9 @@ class VideoScrollerApp(App):
             self.setup_video_viewer()
 
         rotated_root = RotatedRoot()
+        self.manager.size = Window.size
+        self.manager.size_hint = (None, None)
+        Window.bind(on_resize=lambda *_: setattr(self.manager, 'size', Window.size))
         rotated_root.add_widget(self.manager)
         return rotated_root
 
