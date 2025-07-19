@@ -37,6 +37,29 @@ class RotatedRoot(Widget):
     def update_size(self, *args):
         self.size = Window.size
 
+    def on_touch_down(self, touch):
+        rotated_x = touch.y
+        rotated_y = Window.width - touch.x
+        touch.push()
+        touch.apply_transform_2d(lambda x, y: (rotated_x, rotated_y))
+        result = super().on_touch_down(touch)
+        touch.pop()
+        return result
+    
+    def on_touch_up(self, touch):
+        touch.push()
+        touch.apply_transform_2d(lambda x, y: (touch.y, Window.width - touch.x))
+        result = super().on_touch_up(touch)
+        touch.pop()
+        return result
+
+    def on_touch_move(self, touch):
+        touch.push()
+        touch.apply_transform_2d(lambda x, y: (touch.y, Window.width - touch.x))
+        result = super().on_touch_move(touch)
+        touch.pop()
+        return result
+
 
 class WifiScreen(Screen):
     def __init__(self, **kwargs):
@@ -44,7 +67,7 @@ class WifiScreen(Screen):
 
         self.root_layout = FloatLayout()
 
-        self.layout = BoxLayout(orientation='vertical', padding=20, spacing=10, size_hint=(0.9, 0.9), pos_hint={"center_x": 0.5, "center_y": 0.5})
+        self.layout = BoxLayout(orientation='vertical',size= (Window.height, Window.width), padding=20, spacing=10, size_hint=(0.9, 0.9), pos_hint={"center_x": 0.5, "center_y": 0.5})
 
         self.scroll = ScrollView(size_hint=(1, 0.6))
         self.network_list = BoxLayout(orientation='vertical', size_hint_y=None, spacing=5)
@@ -74,7 +97,7 @@ class WifiScreen(Screen):
         print(f"[DEBUG] Found networks: {ssids}")
         for ssid in ssids:
             btn = Button(text=ssid, size_hint_y=None, height=40)
-            btn.bind(on_release=self.make_ssid_selector(ssid))
+            btn.bind(on_press=self.make_ssid_selector(ssid))
             self.network_list.add_widget(btn)
 
     def make_ssid_selector(self, ssid):
@@ -108,8 +131,9 @@ class VideoScreen(Screen):
         print(f"[DEBUG] 🖼️ Creating screen for: {video_path}")
         self.video_path = video_path
         self.preview_path = get_preview_path(video_path)
-        self.layout = FloatLayout(size_hint=(1,1), pos_hint={"x": 0, "y": 0})
-
+        rotated_size = (Window.height, Window.width)
+        self.size = rotated_size
+        self.layout = FloatLayout(size_hint=(None, None), size=rotated_size, pos=(0, 0))
         with self.canvas.before:
             from kivy.graphics import Color, Rectangle
             Color(0, 0, 0, 1)
@@ -138,12 +162,13 @@ class VideoScreen(Screen):
             keep_ratio=True,
             opacity=0
         )
-        self.bind(size=self.update_video_size, pos=self.update_video_size)
+        Window.bind(on_resize=self.update_video_size)
         self.layout.add_widget(self.video)
 
         self.add_widget(self.layout)
+        
     def update_video_size(self, *args):
-        self.video.size=self.size
+        self.video.size = (Window.height, Window.width)
         self.video.pos=self.pos
             
     def update_bg(self, *args):
@@ -183,7 +208,7 @@ class VideoScrollerApp(App):
         Window.fullscreen = 'auto'
         self.manager = ScreenManager(transition=SlideTransition(duration=0.3))
 
-        if not is_wifi_connected():
+        if not  is_wifi_connected():
             print("[INFO] 📶 No Wi-Fi detected. Showing Wi-Fi screen.")
             self.manager.add_widget(WifiScreen(name='wifi'))
             self.manager.current = 'wifi'
@@ -191,9 +216,14 @@ class VideoScrollerApp(App):
             self.setup_video_viewer()
 
         rotated_root = RotatedRoot()
-        self.manager.size = Window.size
+        
+        rotated_size = (Window.height, Window.width)
+        self.manager.size = rotated_size
         self.manager.size_hint = (None, None)
-        Window.bind(on_resize=lambda *_: setattr(self.manager, 'size', Window.size))
+        self.manager.pos = (0, 0)
+        
+        Window.bind(on_resize=lambda *_: setattr(self.manager, 'size', (Window.height, Window.width)))
+        
         rotated_root.add_widget(self.manager)
         return rotated_root
 
@@ -233,9 +263,9 @@ class VideoScrollerApp(App):
             return
         delta = touch.y - self.touch_y
         if delta > 50:
-            self.scroll(-1)
-        elif delta < -50:
             self.scroll(1)
+        elif delta < -50:
+            self.scroll(-1)
         self.touch_y = None
 
     def scroll(self, direction):
