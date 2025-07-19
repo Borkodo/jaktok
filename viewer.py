@@ -10,6 +10,7 @@ import os
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from wifi_utils import scan_networks, connect_to_wifi, is_wifi_connected
@@ -20,43 +21,57 @@ INDEX_JSON = os.path.join(os.path.dirname(__file__), "index.json")
 class WifiScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         self.layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
-        self.status_label = Label(text="Select a network:")
+
+        # Scrollable network list
+        self.scroll = ScrollView(size_hint=(1, 0.6))
+        self.network_list = BoxLayout(orientation='vertical', size_hint_y=None, spacing=5)
+        self.network_list.bind(minimum_height=self.network_list.setter('height'))
+        self.scroll.add_widget(self.network_list)
+
+        self.status_label = Label(text="Select a network:", size_hint_y=None, height=30)
+        self.password_input = TextInput(hint_text="Enter Wi-Fi password", password=True, multiline=False, size_hint_y=None, height=40)
+        self.connect_button = Button(text="Connect", on_press=self.connect_to_selected, size_hint_y=None, height=40)
+
+        self.layout.add_widget(self.scroll)
         self.layout.add_widget(self.status_label)
-
-        self.network_buttons = []
-        self.ssid_input = None
-        self.password_input = TextInput(hint_text="Enter Wi-Fi password", password=True, multiline=False)
-        self.connect_button = Button(text="Connect", on_press=self.connect_to_selected)
-
         self.layout.add_widget(self.password_input)
         self.layout.add_widget(self.connect_button)
-        self.add_widget(self.layout)
-        self.selected_ssid = None
 
+        self.add_widget(self.layout)
+
+        self.selected_ssid = None
         Clock.schedule_once(lambda dt: self.populate_networks(), 0.5)
 
     def populate_networks(self):
         ssids = scan_networks()
+        print(f"[DEBUG] Found networks: {ssids}")
         for ssid in ssids:
             btn = Button(text=ssid, size_hint_y=None, height=40)
-            btn.bind(on_press=lambda instance, s=ssid: self.select_ssid(s))
-            self.layout.add_widget(btn)
-            self.network_buttons.append(btn)
+            btn.bind(on_press=self.make_ssid_selector(ssid))
+            self.network_list.add_widget(btn)
+
+    def make_ssid_selector(self, ssid):
+        return lambda instance: self.select_ssid(ssid)
 
     def select_ssid(self, ssid):
         self.selected_ssid = ssid
         self.status_label.text = f"Selected: {ssid}"
+        print(f"[DEBUG] Selected SSID: {ssid}")
 
     def connect_to_selected(self, instance):
         if not self.selected_ssid:
             self.status_label.text = "⚠️ Please select a network"
             return
-        success = connect_to_wifi(self.selected_ssid, self.password_input.text)
+
+        password = self.password_input.text
+        print(f"[DEBUG] Trying to connect to {self.selected_ssid} with password '{password}'")
+
+        success = connect_to_wifi(self.selected_ssid, password)
         self.status_label.text = "✅ Connected" if success else "❌ Connection failed"
         if success:
             App.get_running_app().restart_video_app()
-
 
 def get_preview_path(video_path):
     return video_path.rsplit(".", 1)[0] + "_preview.jpg"
