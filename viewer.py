@@ -115,11 +115,12 @@ class WifiScreen(Screen):
 
         password = self.password_input.text
         print(f"[DEBUG] Trying to connect to {self.selected_ssid} with password '{password}'")
-
+        self.status_label.text = "🔄 Connecting..."
         success = connect_to_wifi(self.selected_ssid, password)
         self.status_label.text = "✅ Connected" if success else "❌ Connection failed"
+
         if success:
-            App.get_running_app().restart_video_app()
+            Clock.schedule_once(lambda dt: App.get_running_app().restart_video_app(), 0.5)
 
 
 def get_preview_path(video_path):
