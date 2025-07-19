@@ -22,6 +22,7 @@ def connect_to_wifi(ssid, password):
 def is_wifi_connected():
     try:
         result = subprocess.check_output(["nmcli", "-t", "-f", "STATE", "g"])
-        return "connected" in result.decode()
+        state = result.decode().strip()
+        return state == "connected"
     except Exception:
         return False
